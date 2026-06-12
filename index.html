@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wilms' Tumor (Nephroblastoma) - Interactive Lecture</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .group:hover .group-hover\:rotate-y-180 { transform: rotateY(180deg); }
+        
+        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
+        
+        /* Active Recall Blur Effect */
+        .recall-mode .reveal-text {
+            background-color: #cbd5e1;
+            color: transparent;
+            border-radius: 4px;
+            padding: 0 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s, color 0.3s;
+            text-shadow: none;
+        }
+        .recall-mode .reveal-text:hover, .recall-mode .reveal-text.revealed {
+            background-color: #fef08a; /* Yellow highlight on reveal */
+            color: #1f2937;
+        }
+
+        /* Pulsing Alert Animation for "Do Not Palpate" */
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+        }
+        .animate-pulse-red { animation: pulse-red 2s infinite; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #14b8a6; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #0f766e; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        wilms: {
+                            light: '#ccfbf1', /* Teal-50 */
+                            DEFAULT: '#14b8a6', /* Teal-500 */
+                            dark: '#0f766e', /* Teal-700 */
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col md:flex-row font-sans text-gray-800 overflow-hidden">
+
+    <!-- Mobile Header -->
+    <div class="md:hidden bg-wilms-dark text-white p-4 flex justify-between items-center shadow-md z-20">
+        <h1 class="font-bold text-lg"><i class="fa-solid fa-child-reaching mr-2"></i> Wilms' Tumor</h1>
+        <button onclick="toggleMobileMenu()" class="text-white focus:outline-none">
+            <i class="fa-solid fa-bars text-2xl"></i>
+        </button>
+    </div>
+
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar" class="hidden md:flex flex-col w-full md:w-64 bg-white shadow-xl h-full absolute md:relative z-10 transition-transform duration-300">
+        <div class="p-6 bg-wilms-dark text-white hidden md:block">
+            <h1 class="font-bold text-xl"><i class="fa-solid fa-check-double mr-2"></i> Dose of Clarity</h1>
+            <p class="text-sm opacity-80 mt-1">Wilms' Tumor</p>
+        </div>
+        <div class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li><button onclick="showSection('home')" id="btn-home" class="nav-btn w-full text-left px-6 py-3 hover:bg-wilms-light hover:text-wilms-dark transition-colors font-medium bg-wilms-light text-wilms-dark border-r-4 border-wilms-dark"><i class="fa-solid fa-house w-6"></i> Home</button></li>
+                <li><button onclick="showSection('def')" id="btn-def" class="nav-btn w-full text-left px-6 py-3 hover:bg-wilms-light hover:text-wilms-dark transition-colors font-medium text-gray-600"><i class="fa-solid fa-book-medical w-6"></i> Definition</button></li>
+                <li><button onclick="showSection('patho')" id="btn-patho" class="nav-btn w-full text-left px-6 py-3 hover:bg-wilms-light hover:text-wilms-dark transition-colors font-medium text-gray-600"><i class="fa-solid fa-project-diagram w-6"></i> Pathophysiology</button></li>
+                <li><button onclick="showSection('manifestations')" id="btn-manifestations" class="nav-btn w-full text-left px-6 py-3 hover:bg-wilms-light hover:text-wilms-dark transition-colors font-medium text-gray-600"><i class="fa-solid fa-heart-pulse w-6"></i> Manifestations</button></li>
+                <li><button onclick="showSection('diagnostics')" id="btn-diagnostics" class="nav-btn w-full text-left px-6 py-3 hover:bg-wilms-light hover:text-wilms-dark transition-colors font-medium text-gray-600"><i class="fa-solid fa-microscope w-6"></i> Diagnostics</button></li>
+                <li><button onclick="showSection('meds')" id="btn-meds" class="nav-btn w-full text-left px-6 py-3 hover:bg-wilms-light hover:text-wilms-dark transition-colors font-medium text-gray-600"><i class="fa-solid fa-user-doctor w-6"></i> Management</button></li>
+                <li><button onclick="showSection('nursing')" id="btn-nursing" class="nav-btn w-full text-left px-6 py-3 hover:bg-wilms-light hover:text-wilms-dark transition-colors font-medium text-gray-600"><i class="fa-solid fa-user-nurse w-6"></i> Nursing Care</button></li>
+                <li><button onclick="showSection('pnle')" id="btn-pnle" class="nav-btn w-full text-left px-6 py-3 hover:bg-wilms-light hover:text-wilms-dark transition-colors font-medium text-gray-600"><i class="fa-solid fa-star w-6 text-yellow-500"></i> PNLE Key Points</button></li>
+                <li><button onclick="showSection('quiz')" id="btn-quiz" class="nav-btn w-full text-left px-6 py-3 hover:bg-wilms-light hover:text-wilms-dark transition-colors font-medium text-gray-600 border-t mt-2"><i class="fa-solid fa-brain w-6 text-orange-500"></i> Practice Quiz</button></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 h-full overflow-y-auto bg-gray-50 p-4 md:p-8 relative">
+        
+        <!-- SECTION: HOME / TITLE PAGE -->
+        <section id="home" class="content-section max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[80vh] text-center animate-fade-in block">
+            <div class="bg-white rounded-3xl shadow-2xl p-10 md:p-16 w-full max-w-3xl border-t-8 border-wilms relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-10 -mr-10 text-wilms-light opacity-40 pointer-events-none">
+                    <i class="fa-solid fa-kidneys text-[15rem]"></i>
+                </div>
+                
+                <div class="relative z-10">
+                    <div class="bg-wilms-light inline-block p-4 rounded-full text-wilms-dark mb-6 shadow-sm">
+                        <i class="fa-solid fa-check-double text-4xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-500 mb-2 uppercase tracking-widest">Dose of Clarity Review</h3>
+                    <h1 class="text-5xl md:text-6xl font-extrabold text-gray-800 mb-6 leading-tight">
+                        Wilms' Tumor <br/><span class="text-wilms text-4xl md:text-5xl">(Nephroblastoma)</span>
+                    </h1>
+                    <div class="bg-gray-100 inline-block px-6 py-2 rounded-full mb-10 border border-gray-200">
+                        <p class="text-lg text-gray-600 font-medium italic">"You only need to hear it once."</p>
+                    </div>
+                    <br/>
+                    <button onclick="showSection('def')" class="bg-wilms hover:bg-wilms-dark text-white font-bold py-4 px-10 rounded-full shadow-lg transition-transform hover:scale-105 text-lg flex items-center mx-auto focus:outline-none">
+                        Start Lecture <i class="fa-solid fa-arrow-right ml-3"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: DEFINITION -->
+        <section id="def" class="content-section max-w-4xl mx-auto hidden animate-fade-in">
+            <!-- MASSIVE WARNING BLOCK -->
+            <div class="bg-red-600 text-white rounded-2xl shadow-xl p-8 mb-8 animate-pulse-red border-4 border-red-800 relative overflow-hidden text-center">
+                <i class="fa-solid fa-triangle-exclamation text-6xl opacity-20 absolute right-4 top-4"></i>
+                <h2 class="text-4xl font-extrabold mb-4 uppercase tracking-wider"><i class="fa-solid fa-hand-dots mr-3"></i> DO NOT PALPATE!</h2>
+                <p class="text-xl font-semibold mb-2">Never palpate the abdomen of a child with suspected or known Wilms' Tumor.</p>
+                <div class="bg-white text-red-700 inline-block px-4 py-2 rounded font-bold mt-4">
+                    <i class="fa-solid fa-circle-question mr-2"></i> WHY?
+                </div>
+                <p class="text-lg mt-2">Palpation may rupture the tumor capsule, leading to tumor cell seeding (spreading cancer to the peritoneum).</p>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg p-8 border-t-8 border-wilms">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="bg-wilms-light p-4 rounded-full text-wilms-dark">
+                        <i class="fa-solid fa-kidneys text-3xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-800">What is Wilms' Tumor?</h2>
+                </div>
+                <p class="text-xl text-gray-600 leading-relaxed mb-6">
+                    Wilms' Tumor (Nephroblastoma) is a <strong>malignant renal tumor</strong> (cancer of the kidney) that arises from embryonic kidney cells (metanephric blastema).
+                </p>
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg mb-6">
+                    <p class="text-blue-900 font-medium">
+                        <i class="fa-solid fa-circle-info mr-2"></i> It is the <strong>most common</strong> malignant kidney tumor in children, usually diagnosed before age 5 (Peak: 2-4 years).
+                    </p>
+                </div>
+                
+                <h3 class="text-xl font-bold text-gray-800 border-b-2 border-wilms pb-2 mb-4 mt-8">Etiology & Risk Factors</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 class="font-bold text-wilms-dark"><i class="fa-solid fa-dna mr-2"></i> Genetics</h4>
+                        <p class="text-sm text-gray-600">Mutations in the <strong>WT1 or WT2 gene</strong> on chromosome 11. Can be Autosomal dominant.</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <h4 class="font-bold text-wilms-dark"><i class="fa-solid fa-venus-mars mr-2"></i> Demographics</h4>
+                        <p class="text-sm text-gray-600">Slightly more common in <strong>females</strong> and more frequent in <strong>African-American</strong> children.</p>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 md:col-span-2">
+                        <h4 class="font-bold text-wilms-dark"><i class="fa-solid fa-people-arrows mr-2"></i> Congenital Anomalies & Syndromes</h4>
+                        <ul class="text-sm text-gray-600 list-disc pl-5 mt-2 space-y-1">
+                            <li><strong>Aniridia:</strong> Absence of the iris in the eye.</li>
+                            <li><strong>Hemihypertrophy:</strong> One side of the body is larger than the other.</li>
+                            <li><strong>Syndromes:</strong> Beckwith-Wiedemann syndrome, Denys-Drash syndrome.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: PATHOPHYSIOLOGY -->
+        <section id="patho" class="content-section max-w-4xl mx-auto hidden animate-fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b-2 border-wilms pb-2">Pathophysiology</h2>
+            <p class="text-gray-600 mb-6 italic">Click through the steps to see how a Nephroblastoma develops:</p>
+            
+            <div class="relative wrap overflow-hidden p-4 h-full">
+                <div class="absolute border-opacity-20 border-gray-700 h-full border-l-2 left-6 md:left-1/2"></div>
+                
+                <!-- Step 1 -->
+                <div class="mb-8 flex justify-between items-center w-full md:flex-row-reverse left-timeline cursor-pointer" onclick="toggleDetails('patho-1')">
+                    <div class="order-1 md:w-5/12"></div>
+                    <div class="z-20 flex items-center order-1 bg-wilms shadow-xl w-12 h-12 rounded-full justify-center">
+                        <h1 class="mx-auto font-bold text-lg text-white">1</h1>
+                    </div>
+                    <div class="order-1 bg-white rounded-lg shadow-md w-full md:w-5/12 px-6 py-4 ml-4 md:ml-0 hover:shadow-lg transition-shadow border-l-4 border-wilms">
+                        <h3 class="font-bold text-gray-800 text-lg">Fetal Development Failure</h3>
+                        <p id="patho-1" class="text-sm leading-snug tracking-wide text-gray-600 mt-2 hidden">
+                            During fetal development, some kidney cells (<strong>metanephric blastema</strong>) fail to mature properly into normal kidney tissue.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="mb-8 flex justify-between items-center w-full left-timeline cursor-pointer" onclick="toggleDetails('patho-2')">
+                    <div class="order-1 md:w-5/12"></div>
+                    <div class="z-20 flex items-center order-1 bg-wilms shadow-xl w-12 h-12 rounded-full justify-center">
+                        <h1 class="mx-auto font-bold text-lg text-white">2</h1>
+                    </div>
+                    <div class="order-1 bg-white rounded-lg shadow-md w-full md:w-5/12 px-6 py-4 ml-4 md:ml-0 hover:shadow-lg transition-shadow border-r-4 border-wilms md:text-right">
+                        <h3 class="font-bold text-gray-800 text-lg">Uncontrollable Division</h3>
+                        <p id="patho-2" class="text-sm leading-snug tracking-wide text-gray-600 mt-2 hidden">
+                            After birth, instead of maturing, these embryonic cells continue to divide uncontrollably.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="mb-8 flex justify-between items-center w-full md:flex-row-reverse left-timeline cursor-pointer" onclick="toggleDetails('patho-3')">
+                    <div class="order-1 md:w-5/12"></div>
+                    <div class="z-20 flex items-center order-1 bg-orange-500 shadow-xl w-12 h-12 rounded-full justify-center">
+                        <h1 class="mx-auto font-bold text-lg text-white">3</h1>
+                    </div>
+                    <div class="order-1 bg-white rounded-lg shadow-md w-full md:w-5/12 px-6 py-4 ml-4 md:ml-0 hover:shadow-lg transition-shadow border-l-4 border-orange-500">
+                        <h3 class="font-bold text-gray-800 text-lg">Tumor Mass Formation</h3>
+                        <p id="patho-3" class="text-sm leading-snug tracking-wide text-gray-600 mt-2 hidden">
+                            A solid tumor mass forms within one kidney (unilateral). <em>Occasionally, it can affect both kidneys (bilateral).</em>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="mb-8 flex justify-between items-center w-full left-timeline cursor-pointer" onclick="toggleDetails('patho-4')">
+                    <div class="order-1 md:w-5/12"></div>
+                    <div class="z-20 flex items-center order-1 bg-red-600 shadow-xl w-12 h-12 rounded-full justify-center">
+                        <h1 class="mx-auto font-bold text-lg text-white">4</h1>
+                    </div>
+                    <div class="order-1 bg-red-50 rounded-lg shadow-md w-full md:w-5/12 px-6 py-4 ml-4 md:ml-0 hover:shadow-lg transition-shadow border-r-4 border-red-600 md:text-right">
+                        <h3 class="font-bold text-red-800 text-lg">Rapid Growth & Metastasis</h3>
+                        <p id="patho-4" class="text-sm leading-snug tracking-wide text-red-700 mt-2 hidden">
+                            The tumor grows rapidly, encapsulating itself. It can extend into the renal vein or inferior vena cava, and metastasize via blood to the <strong>lungs (most common)</strong>, liver, or bones.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-4">
+                <button onclick="revealAll('patho-')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded text-sm transition-colors">Reveal All Steps</button>
+            </div>
+        </section>
+
+        <!-- SECTION: MANIFESTATIONS -->
+        <section id="manifestations" class="content-section max-w-5xl mx-auto hidden animate-fade-in">
+            <div class="flex justify-between items-end mb-6 border-b-2 border-wilms pb-2">
+                <h2 class="text-3xl font-bold text-gray-800">Clinical Manifestations</h2>
+            </div>
+            
+            <!-- THE CLASSIC TRIAD FLASHCARDS -->
+            <div class="bg-orange-50 border border-orange-200 rounded-xl p-6 mb-8 text-center">
+                <h3 class="text-xl font-bold text-orange-800 mb-2"><i class="fa-solid fa-crown mr-2"></i> The Classic Triad</h3>
+                <p class="text-orange-600 text-sm mb-6">Hover or tap cards to flip.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 perspective-1000">
+                    <!-- Mass -->
+                    <div class="group h-40 w-full cursor-pointer">
+                        <div class="relative h-full w-full transition-all duration-500 transform-style-3d group-hover:rotate-y-180">
+                            <div class="absolute h-full w-full bg-white rounded-xl shadow-md border-2 border-orange-400 flex flex-col items-center justify-center backface-hidden">
+                                <i class="fa-solid fa-cubes text-4xl text-orange-500 mb-2"></i>
+                                <h4 class="text-xl font-bold">1. Mass</h4>
+                            </div>
+                            <div class="absolute h-full w-full bg-orange-500 text-white rounded-xl shadow-md flex flex-col items-center justify-center p-4 text-center backface-hidden rotate-y-180">
+                                <p class="font-bold">Painless Abdominal Mass</p>
+                                <p class="text-sm mt-2">Firm, smooth, deep, non-tender. Often found by a parent during bathing.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hematuria -->
+                    <div class="group h-40 w-full cursor-pointer">
+                        <div class="relative h-full w-full transition-all duration-500 transform-style-3d group-hover:rotate-y-180">
+                            <div class="absolute h-full w-full bg-white rounded-xl shadow-md border-2 border-red-400 flex flex-col items-center justify-center backface-hidden">
+                                <i class="fa-solid fa-droplet text-4xl text-red-500 mb-2"></i>
+                                <h4 class="text-xl font-bold">2. Hematuria</h4>
+                            </div>
+                            <div class="absolute h-full w-full bg-red-500 text-white rounded-xl shadow-md flex flex-col items-center justify-center p-4 text-center backface-hidden rotate-y-180">
+                                <p class="font-bold">Blood in Urine</p>
+                                <p class="text-sm mt-2">Occurs as the tumor invades the renal collecting system.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hypertension -->
+                    <div class="group h-40 w-full cursor-pointer">
+                        <div class="relative h-full w-full transition-all duration-500 transform-style-3d group-hover:rotate-y-180">
+                            <div class="absolute h-full w-full bg-white rounded-xl shadow-md border-2 border-blue-400 flex flex-col items-center justify-center backface-hidden">
+                                <i class="fa-solid fa-heart-pulse text-4xl text-blue-500 mb-2"></i>
+                                <h4 class="text-xl font-bold">3. Hypertension</h4>
+                            </div>
+                            <div class="absolute h-full w-full bg-blue-500 text-white rounded-xl shadow-md flex flex-col items-center justify-center p-4 text-center backface-hidden rotate-y-180">
+                                <p class="font-bold">High Blood Pressure</p>
+                                <p class="text-sm mt-2">Tumor affects renal blood flow, causing excess Renin secretion.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Systems -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white border rounded-lg p-5 shadow-sm">
+                    <h4 class="font-bold text-gray-800 border-b pb-2 mb-3"><i class="fa-solid fa-stomach mr-2 text-wilms"></i> Gastrointestinal</h4>
+                    <ul class="list-disc pl-5 text-gray-600 text-sm space-y-2">
+                        <li>Abdominal pain, distention.</li>
+                        <li>Nausea, vomiting, constipation, anorexia.</li>
+                        <li><em>Cause: Compression of abdominal organs by the mass.</em></li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white border rounded-lg p-5 shadow-sm">
+                    <h4 class="font-bold text-gray-800 border-b pb-2 mb-3"><i class="fa-solid fa-lungs-virus mr-2 text-gray-500"></i> Advanced (Metastasis)</h4>
+                    <ul class="list-disc pl-5 text-gray-600 text-sm space-y-2">
+                        <li>Dyspnea (shortness of breath), cough, chest pain.</li>
+                        <li>Systemic: Fever, malaise, weight loss.</li>
+                        <li><em>Cause: Tumor spread via blood, most commonly to the lungs.</em></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: DIAGNOSTICS -->
+        <section id="diagnostics" class="content-section max-w-4xl mx-auto hidden animate-fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b-2 border-wilms pb-2">Diagnostic Tests</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+                    <thead>
+                        <tr class="bg-wilms text-white">
+                            <th class="p-4 font-bold">Test</th>
+                            <th class="p-4 font-bold">Purpose / Findings</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-700">
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-4 font-semibold"><i class="fa-solid fa-laptop-medical mr-2 text-wilms-dark"></i> Abdominal Ultrasound</td>
+                            <td class="p-4">Detects the presence of a solid renal mass initially.</td>
+                        </tr>
+                        <tr class="border-b hover:bg-gray-50 bg-gray-50">
+                            <td class="p-4 font-semibold"><i class="fa-solid fa-x-ray mr-2 text-wilms-dark"></i> CT Scan / MRI</td>
+                            <td class="p-4">Determines tumor size, exact location, and checks for metastasis to surrounding organs.</td>
+                        </tr>
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-4 font-semibold"><i class="fa-solid fa-lungs mr-2 text-wilms-dark"></i> Chest X-ray / CT</td>
+                            <td class="p-4">Specifically checks for lung metastasis (most common site of spread).</td>
+                        </tr>
+                        <tr class="border-b hover:bg-gray-50 bg-gray-50">
+                            <td class="p-4 font-semibold"><i class="fa-solid fa-vial mr-2 text-wilms-dark"></i> IV Pyelogram (IVP)</td>
+                            <td class="p-4">Shows kidney function and shape/distortion of the renal pelvis.</td>
+                        </tr>
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-4 font-semibold"><i class="fa-solid fa-flask mr-2 text-wilms-dark"></i> Urinalysis & Bloodwork</td>
+                            <td class="p-4">UA detects hematuria. BUN/Creatinine evaluate renal function. CBC checks overall health.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded">
+                <i class="fa-solid fa-circle-exclamation mr-2"></i> <strong>Note:</strong> Biopsy is usually deferred until post-surgery to prevent accidental puncturing and seeding of the tumor during the procedure.
+            </div>
+        </section>
+
+        <!-- SECTION: MANAGEMENT -->
+        <section id="meds" class="content-section max-w-4xl mx-auto hidden animate-fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b-2 border-wilms pb-2">Treatment & Prognosis</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Surgery -->
+                <div class="bg-white rounded-xl shadow-md border-t-4 border-blue-500 p-6 flex flex-col">
+                    <i class="fa-solid fa-scalpel text-4xl text-blue-500 mb-4 text-center"></i>
+                    <h3 class="font-bold text-xl text-center mb-2">Surgery</h3>
+                    <p class="text-sm text-gray-600 flex-1">
+                        <strong>Nephrectomy</strong> (removal of affected kidney and tumor) is the primary treatment. For bilateral tumors, a partial nephrectomy is attempted to preserve renal tissue.
+                    </p>
+                </div>
+                
+                <!-- Chemotherapy -->
+                <div class="bg-white rounded-xl shadow-md border-t-4 border-green-500 p-6 flex flex-col">
+                    <i class="fa-solid fa-pills text-4xl text-green-500 mb-4 text-center"></i>
+                    <h3 class="font-bold text-xl text-center mb-2">Chemotherapy</h3>
+                    <p class="text-sm text-gray-600 flex-1">
+                        Begins within days after diagnosis. Used pre- and post-surgery to shrink/kill residual cells. <br><br>
+                        <em>Common Drugs: Vincristine, Dactinomycin, Doxorubicin.</em>
+                    </p>
+                </div>
+
+                <!-- Radiation -->
+                <div class="bg-white rounded-xl shadow-md border-t-4 border-purple-500 p-6 flex flex-col">
+                    <i class="fa-solid fa-radiation text-4xl text-purple-500 mb-4 text-center"></i>
+                    <h3 class="font-bold text-xl text-center mb-2">Radiation</h3>
+                    <p class="text-sm text-gray-600 flex-1">
+                        Given post-operatively once the incision heals, primarily for advanced or metastatic disease to ensure all cancer cells are destroyed.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Prognosis -->
+            <div class="bg-gray-100 rounded-lg p-6 border border-gray-200">
+                <h3 class="text-xl font-bold text-gray-800 mb-3"><i class="fa-solid fa-chart-line mr-2"></i> Prognosis</h3>
+                <p class="text-green-700 font-bold text-lg mb-2"><i class="fa-solid fa-check mr-2"></i> Excellent if caught early (~90% survival rate).</p>
+                <p class="text-gray-700 font-semibold mb-1">Poor prognosis indicators:</p>
+                <ul class="list-disc pl-5 text-sm text-red-600">
+                    <li>Bilateral tumors.</li>
+                    <li>Metastasis at diagnosis.</li>
+                    <li>Unfavorable histology (anaplastic cells).</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION: NURSING CARE -->
+        <section id="nursing" class="content-section max-w-4xl mx-auto hidden animate-fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-b-2 border-wilms pb-2">Nursing Management</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Pre-op -->
+                <div class="bg-white shadow rounded-lg p-6 border-l-4 border-orange-500">
+                    <h3 class="text-xl font-bold text-orange-600 mb-4 border-b pb-2"><i class="fa-solid fa-clipboard-list mr-2"></i> Preoperative Care</h3>
+                    <ul class="space-y-3 text-gray-700">
+                        <li class="font-bold text-red-600 text-lg animate-pulse-red p-2 bg-red-50 rounded"><i class="fa-solid fa-ban mr-2"></i> DO NOT PALPATE ABDOMEN. Post a sign on the bed.</li>
+                        <li><i class="fa-solid fa-hands-holding-child mr-2 text-wilms"></i> Handle the child very gently during bathing and turning.</li>
+                        <li><i class="fa-solid fa-stethoscope mr-2 text-wilms"></i> Monitor Blood Pressure closely (frequently elevated due to renin).</li>
+                        <li><i class="fa-solid fa-users mr-2 text-wilms"></i> Support family: A sudden pediatric cancer diagnosis causes extreme anxiety.</li>
+                    </ul>
+                </div>
+
+                <!-- Post-op -->
+                <div class="bg-white shadow rounded-lg p-6 border-l-4 border-blue-500">
+                    <h3 class="text-xl font-bold text-blue-600 mb-4 border-b pb-2"><i class="fa-solid fa-bed-pulse mr-2"></i> Postoperative Care</h3>
+                    <ul class="space-y-3 text-gray-700">
+                        <li><i class="fa-solid fa-droplet mr-2 text-blue-400"></i> <strong>Strict I&O:</strong> Monitor urine output strictly to assess the function of the remaining single kidney.</li>
+                        <li><i class="fa-solid fa-shield-virus mr-2 text-green-500"></i> Monitor for infection (surgical site, urinary tract, or due to chemo).</li>
+                        <li><i class="fa-solid fa-apple-whole mr-2 text-red-400"></i> Support nutrition (high-protein, high-calorie diet for healing).</li>
+                        <li class="font-bold"><i class="fa-solid fa-football mr-2 text-orange-800"></i> TEACHING: Avoid all contact sports after recovery to protect the remaining kidney.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: PNLE Key Points -->
+        <section id="pnle" class="content-section max-w-4xl mx-auto hidden animate-fade-in">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b-2 border-yellow-500 pb-2 gap-4">
+                <h2 class="text-3xl font-bold text-gray-800 flex items-center">
+                    <i class="fa-solid fa-star text-yellow-500 mr-3"></i> Key Points for PNLE
+                </h2>
+                
+                <div class="flex items-center bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
+                    <span class="mr-3 text-sm font-bold text-gray-700">Active Recall Mode</span>
+                    <button id="recall-toggle" onclick="toggleRecallMode()" class="w-12 h-6 bg-gray-300 rounded-full relative transition-colors duration-300 focus:outline-none">
+                        <div id="recall-knob" class="w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition-transform duration-300 shadow"></div>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded text-sm text-blue-800 hidden" id="recall-instruction">
+                <i class="fa-solid fa-lightbulb mr-2 text-yellow-500"></i> <strong>Memory Boost:</strong> Try to guess the hidden words before clicking to reveal them!
+            </div>
+            
+            <div class="bg-white shadow-xl rounded-xl p-8 border border-yellow-200" id="pnle-list-container">
+                <ul class="space-y-4 text-lg text-gray-800 font-medium">
+                    <li class="flex items-center p-3 hover:bg-yellow-50 rounded transition-colors"><span class="bg-yellow-400 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 shadow shrink-0">1</span> <div>The absolute most important nursing intervention is <span class="reveal-text font-bold text-red-600">Do NOT palpate the abdomen</span> to prevent tumor seeding.</div></li>
+                    
+                    <li class="flex items-center p-3 hover:bg-yellow-50 rounded transition-colors"><span class="bg-yellow-400 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 shadow shrink-0">2</span> <div>Wilms' tumor affects the <span class="reveal-text font-bold">Kidneys</span> and is most common in children aged <span class="reveal-text font-bold">2-4 years</span>.</div></li>
+                    
+                    <li class="flex items-center p-3 hover:bg-yellow-50 rounded transition-colors"><span class="bg-yellow-400 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 shadow shrink-0">3</span> <div>The classic triad of symptoms is: Painless <span class="reveal-text font-bold">abdominal mass</span>, <span class="reveal-text font-bold">hematuria</span>, and <span class="reveal-text font-bold">hypertension</span>.</div></li>
+                    
+                    <li class="flex items-center p-3 hover:bg-yellow-50 rounded transition-colors"><span class="bg-yellow-400 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 shadow shrink-0">4</span> <div>Post-operatively, you must strictly monitor <span class="reveal-text font-bold">urine output</span> to assess the remaining kidney's function.</div></li>
+                    
+                    <li class="flex items-center p-3 hover:bg-yellow-50 rounded transition-colors"><span class="bg-yellow-400 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 shadow shrink-0">5</span> <div>A common genetic association is a mutation on the <span class="reveal-text font-bold">WT1</span> gene on chromosome 11.</div></li>
+                    
+                    <li class="flex items-center p-3 hover:bg-yellow-50 rounded transition-colors"><span class="bg-yellow-400 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 shadow shrink-0">6</span> <div>Upon recovery, patient teaching must emphasize avoiding <span class="reveal-text font-bold text-orange-600">contact sports</span> for life.</div></li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- SECTION: QUIZ -->
+        <section id="quiz" class="content-section max-w-3xl mx-auto hidden animate-fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2 border-b-2 border-orange-500 pb-2 flex items-center">
+                <i class="fa-solid fa-brain text-orange-500 mr-3"></i> Knowledge Check
+            </h2>
+            <p class="text-gray-600 mb-6">Test your retention with these high-yield board questions.</p>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-200 h-2">
+                    <div id="quiz-progress" class="bg-orange-500 h-2 transition-all duration-500" style="width: 20%"></div>
+                </div>
+
+                <div class="p-8">
+                    <div id="quiz-header" class="flex justify-between items-center mb-6">
+                        <span id="question-tracker" class="bg-orange-100 text-orange-800 text-sm font-bold px-3 py-1 rounded-full">Question 1 of 5</span>
+                        <span id="quiz-score" class="text-gray-500 font-semibold text-sm">Score: 0</span>
+                    </div>
+
+                    <h3 id="question-text" class="text-2xl font-bold text-gray-800 mb-6">Question text goes here...</h3>
+
+                    <div id="options-container" class="space-y-3">
+                        <!-- Options injected by JS -->
+                    </div>
+
+                    <div id="explanation-container" class="mt-6 hidden">
+                        <div id="explanation-box" class="p-4 rounded-lg">
+                            <p id="explanation-text" class="font-medium text-gray-800"></p>
+                        </div>
+                        <button id="next-btn" onclick="nextQuestion()" class="mt-4 w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg transition-colors hidden">
+                            Next Question <i class="fa-solid fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Quiz Completion Screen -->
+                <div id="quiz-completion" class="p-8 text-center hidden">
+                    <i class="fa-solid fa-trophy text-6xl text-yellow-400 mb-4"></i>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Quiz Complete!</h2>
+                    <p id="final-score" class="text-xl text-gray-600 mb-6">You scored X out of Y.</p>
+                    <button onclick="resetQuiz()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform hover:scale-105">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> Retake Quiz
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- Navigation Logic ---
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('block');
+            });
+            
+            const targetSection = document.getElementById(sectionId);
+            if(targetSection) {
+                targetSection.classList.remove('hidden');
+                targetSection.classList.add('block');
+            }
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-wilms-light', 'text-wilms-dark', 'border-r-4', 'border-wilms-dark');
+                btn.classList.add('text-gray-600');
+            });
+
+            const activeBtn = document.getElementById('btn-' + sectionId);
+            if(activeBtn) {
+                activeBtn.classList.remove('text-gray-600');
+                activeBtn.classList.add('bg-wilms-light', 'text-wilms-dark', 'border-r-4', 'border-wilms-dark');
+            }
+
+            if(window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('hidden');
+            }
+        }
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+        }
+
+        // --- Pathophysiology Timeline Logic ---
+        function toggleDetails(id) {
+            const el = document.getElementById(id);
+            if(el) el.classList.toggle('hidden');
+        }
+
+        function revealAll(prefix) {
+            for(let i=1; i<=4; i++) {
+                const el = document.getElementById(prefix + i);
+                if(el) el.classList.remove('hidden');
+            }
+        }
+
+        // --- Active Recall Mode Logic ---
+        let recallModeActive = false;
+        
+        function toggleRecallMode() {
+            recallModeActive = !recallModeActive;
+            const toggle = document.getElementById('recall-toggle');
+            const knob = document.getElementById('recall-knob');
+            const container = document.getElementById('pnle-list-container');
+            const instruction = document.getElementById('recall-instruction');
+            const revealTexts = document.querySelectorAll('.reveal-text');
+
+            if (recallModeActive) {
+                toggle.classList.replace('bg-gray-300', 'bg-wilms-dark');
+                knob.classList.add('translate-x-6');
+                container.classList.add('recall-mode');
+                instruction.classList.remove('hidden');
+                revealTexts.forEach(el => el.classList.remove('revealed'));
+            } else {
+                toggle.classList.replace('bg-wilms-dark', 'bg-gray-300');
+                knob.classList.remove('translate-x-6');
+                container.classList.remove('recall-mode');
+                instruction.classList.add('hidden');
+            }
+        }
+
+        // Add click listener to reveal text
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.reveal-text').forEach(item => {
+                item.addEventListener('click', function() {
+                    if (recallModeActive) {
+                        this.classList.toggle('revealed');
+                    }
+                });
+            });
+            loadQuestion(); // Init Quiz
+        });
+
+        // --- Quiz Logic ---
+        const quizData = [
+            {
+                question: "A nurse is assessing a 3-year-old child and notices a firm, painless mass on one side of the abdomen. The chart indicates suspected Wilms' tumor. What is the priority nursing action?",
+                options: [
+                    "Palpate the mass to determine its exact size.",
+                    "Stop the assessment and place a 'Do Not Palpate Abdomen' sign on the bed.",
+                    "Prepare the child for an immediate biopsy.",
+                    "Encourage the child to cough and deep breathe."
+                ],
+                correctAnswer: 1,
+                explanation: "Correct! The priority is to PREVENT rupture of the tumor capsule. Palpation can cause the tumor to seed and metastasize to the peritoneum."
+            },
+            {
+                question: "Which of the following is considered the 'Classic Triad' of symptoms for Wilms' Tumor?",
+                options: [
+                    "Hematuria, Hypertension, Painless Abdominal Mass",
+                    "Fever, Weight loss, Dyspnea",
+                    "Polyuria, Hypotension, Flank Pain",
+                    "Anuria, Edema, Bradycardia"
+                ],
+                correctAnswer: 0,
+                explanation: "Correct! The hallmark presentation is a painless abdominal mass, hematuria (blood in urine), and hypertension (due to excess renin from the compressed kidney)."
+            },
+            {
+                question: "A child has just returned from a nephrectomy for Wilms' tumor. Which postoperative assessment is the most critical?",
+                options: [
+                    "Bowel sounds",
+                    "Capillary refill",
+                    "Urine output",
+                    "Pupillary response"
+                ],
+                correctAnswer: 2,
+                explanation: "Correct! Because one kidney was removed, it is absolutely critical to strictly monitor urine output to ensure the remaining single kidney is functioning properly."
+            },
+            {
+                question: "If a Wilms' tumor metastasizes, which organ is the most common site of spread?",
+                options: [
+                    "Brain",
+                    "Liver",
+                    "Lungs",
+                    "Bones"
+                ],
+                correctAnswer: 2,
+                explanation: "Correct! Wilms' tumor most commonly spreads via the bloodstream to the lungs. A chest X-ray or CT is part of the standard diagnostic workup."
+            },
+            {
+                question: "During discharge teaching for a child recovering from Wilms' tumor treatment, what specific activity restriction must the nurse emphasize?",
+                options: [
+                    "Avoid swimming in public pools.",
+                    "Avoid all contact sports.",
+                    "Limit exposure to sunlight.",
+                    "Avoid walking up stairs for 6 months."
+                ],
+                correctAnswer: 1,
+                explanation: "Correct! Since the child now only has one kidney, they must avoid contact sports (like football, hockey, martial arts) for life to prevent trauma to the solitary kidney."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let hasAnswered = false;
+
+        function loadQuestion() {
+            hasAnswered = false;
+            const q = quizData[currentQuestionIndex];
+            
+            document.getElementById('question-tracker').innerText = `Question ${currentQuestionIndex + 1} of ${quizData.length}`;
+            document.getElementById('quiz-score').innerText = `Score: ${score}`;
+            document.getElementById('quiz-progress').style.width = `${((currentQuestionIndex) / quizData.length) * 100}%`;
+            
+            document.getElementById('question-text').innerText = q.question;
+            
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors font-medium text-gray-700 focus:outline-none';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('explanation-container').classList.add('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+        }
+
+        function checkAnswer(selectedIndex, btnElement) {
+            if (hasAnswered) return;
+            hasAnswered = true;
+            
+            const q = quizData[currentQuestionIndex];
+            const isCorrect = (selectedIndex === q.correctAnswer);
+            const explanationBox = document.getElementById('explanation-box');
+            const explanationText = document.getElementById('explanation-text');
+            const explanationContainer = document.getElementById('explanation-container');
+            
+            const allBtns = document.getElementById('options-container').children;
+            for(let i=0; i<allBtns.length; i++) {
+                allBtns[i].disabled = true;
+                if(i === q.correctAnswer) {
+                    allBtns[i].className = 'w-full text-left p-4 rounded-xl border-2 border-green-500 bg-green-50 font-medium text-gray-700';
+                    allBtns[i].innerHTML += ' <i class="fa-solid fa-check-circle text-green-500 float-right mt-1"></i>';
+                } else if(i === selectedIndex && !isCorrect) {
+                    allBtns[i].className = 'w-full text-left p-4 rounded-xl border-2 border-red-500 bg-red-50 font-medium text-gray-700';
+                    allBtns[i].innerHTML += ' <i class="fa-solid fa-times-circle text-red-500 float-right mt-1"></i>';
+                } else {
+                    allBtns[i].classList.add('opacity-50');
+                }
+            }
+
+            explanationContainer.classList.remove('hidden');
+            document.getElementById('next-btn').classList.remove('hidden');
+            
+            if (isCorrect) {
+                score++;
+                explanationBox.className = 'p-4 rounded-lg bg-green-100 border border-green-200 text-green-800';
+                explanationText.innerHTML = `<i class="fa-solid fa-bullseye mr-2"></i> ${q.explanation}`;
+            } else {
+                explanationBox.className = 'p-4 rounded-lg bg-red-100 border border-red-200 text-red-800';
+                explanationText.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i> <strong>Incorrect.</strong> ${q.explanation.replace('Correct! ', '')}`;
+            }
+            
+            document.getElementById('quiz-score').innerText = `Score: ${score}`;
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showQuizCompletion();
+            }
+        }
+
+        function showQuizCompletion() {
+            document.getElementById('question-tracker').parentElement.classList.add('hidden');
+            document.getElementById('question-text').classList.add('hidden');
+            document.getElementById('options-container').classList.add('hidden');
+            document.getElementById('explanation-container').classList.add('hidden');
+            
+            document.getElementById('quiz-progress').style.width = '100%';
+            
+            const completionScreen = document.getElementById('quiz-completion');
+            completionScreen.classList.remove('hidden');
+            
+            let message = "";
+            if(score === quizData.length) message = "Perfect! You nailed the Board questions!";
+            else if(score >= quizData.length / 2) message = "Great job! Keep reviewing the key points.";
+            else message = "Good effort! Remember the #1 rule: Do Not Palpate! Try again.";
+            
+            document.getElementById('final-score').innerHTML = `You scored <strong>${score} out of ${quizData.length}</strong>.<br><span class="text-sm mt-2 block">${message}</span>`;
+        }
+
+        function resetQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            
+            document.getElementById('question-tracker').parentElement.classList.remove('hidden');
+            document.getElementById('question-text').classList.remove('hidden');
+            document.getElementById('options-container').classList.remove('hidden');
+            document.getElementById('quiz-completion').classList.add('hidden');
+            
+            loadQuestion();
+        }
+    </script>
+</body>
+</html>
